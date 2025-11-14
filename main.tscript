@@ -1,36 +1,60 @@
-# We define the block size
-var block_size = 50;
-
-# We define the outline to be 1/8 of the block size
+var block_size = math.min(canvas.width() / 10, canvas.height() / 20);
 var outline_size = block_size/8;
 
-# Starting position for the block
-var x = 200;
+var x = 5;
 var y = 0;
 
-# To create the illusion of falling, we run an infinite loop
-# where we draw the block, wait, then change the y position
-# reset the canvas and start again.
-while(y < canvas.height()) do {
+var colors = {
+	"yellow": {
+		"base": [204/255,204/255,0/255],
+		"light": [255/255,255/255,0/255],
+		"dark": [153/255,153/255,0/255]
+	}
+};
+
+
+function draw_block(pos_x, pos_y, color){
+	pos_x = pos_x * block_size;
+	pos_y = pos_y * block_size;
+
+	# Draw single block 
+	# dark yellow rgba=255,255,0
+	canvas.setFillColor(
+		colors[color]["dark"][0],
+		colors[color]["dark"][1],
+		colors[color]["dark"][2]
+	,1);
+	canvas.fillRect(pos_x,pos_y,block_size,block_size);
+	
+	# light yellow rgb=153,153,0
+	
+	canvas.setFillColor(
+		colors[color]["light"][0],
+		colors[color]["light"][1],
+		colors[color]["light"][2]
+		,1);
+	canvas.fillArea([[pos_x,pos_y],[pos_x,pos_y+block_size],[pos_x+block_size,pos_y]]);
+	
+	
+	#´yellow rgb=204,204,0 
+	canvas.setFillColor(
+		colors[color]["base"][0],
+		colors[color]["base"][1],
+		colors[color]["base"][2]
+		,1);
+	canvas.fillRect(pos_x+outline_size * 0.5,pos_y+outline_size * 0.5,block_size-outline_size,block_size-outline_size);
+}
+
+while(y < 20) do {
 	canvas.setFillColor(1,1,1,1);
 	canvas.clear();
 
-	# draw single block
-	# dark yellow rgba=255,255,0
-	canvas.setFillColor(153/255,153/255,0/255,1);
-	canvas.fillRect(x,y,block_size,block_size);
-
-	# light yellow rgb=153,153,0
-	canvas.setFillColor(255/255,255/255,0/255,1);
-	canvas.fillArea([[x,y],[x,y+block_size],[x+block_size,y]]);
-
-	# yellow rgb=204,204,0
-	canvas.setFillColor(204/255,204/255,0/255,1);
-	canvas.fillRect(x+outline_size * 0.5,y+outline_size * 0.5,block_size-outline_size,block_size-outline_size);
-
-    # change the y position of the block
-	y = y + block_size;
-
-	# wait so we see something
-	wait(1000);
+	draw_block(x,y, "yellow");
+	draw_block(x+1,y, "yellow");
+	draw_block(x,y+1, "yellow");
+	draw_block(x+1,y+1, "yellow");
+	
+	y = y + 1;
+	wait(300);
 }
+
