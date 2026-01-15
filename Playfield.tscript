@@ -1,0 +1,60 @@
+class Playfield {
+	public:
+		var blockmap = [];
+
+		constructor(width, height){
+			this.blockmap.push(Array(width+2,"f"));
+			for 0:height do	this.blockmap.push(Array(width+2, 0));
+
+			for var row in this.blockmap do {
+				row[0] = "f";
+				row[width+1] = "f";
+			}
+
+			this.blockmap.push(Array(width+2,"f"));
+		}
+
+		function insert_tetromino(tetromino){
+			for var i in 0:tetromino.blockmap().size() do
+				for var j in 0:tetromino.blockmap()[0].size() do
+					if tetromino.blockmap()[i][j] != 0 then this.blockmap[tetromino.row + i][tetromino.column + j] = tetromino.blockmap()[i][j];
+		}
+
+		function check_collision(tetromino){
+			for var row in 0:tetromino.blockmap().size() do {
+				for var column in 0:tetromino.blockmap()[row].size() do {
+					if tetromino.blockmap()[row][column] != 0 then {
+						if this.blockmap[row + tetromino.row][column + tetromino.column] != 0 then return true;
+					}
+				}
+			}
+			return false;
+	}
+
+	function remove_full_rows(top_row){
+		var full_rows = 0;
+		for var row in top_row:math.min(top_row+4, 21) do {
+			var is_full_row = true;
+				for var column in 1:11 do {
+					if this.blockmap[row][column] == 0 then {
+						is_full_row = false;
+
+						break;
+					}
+				}
+				if is_full_row then {
+					full_rows += 1;
+					this.blockmap.remove(row);
+
+					# make new row
+					var new_row = Array(12, 0);
+					new_row[0] = "f";
+					new_row[11] = "f";
+
+					this.blockmap.insert(1, new_row);
+				}
+		}
+
+		return full_rows;
+	}
+}

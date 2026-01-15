@@ -1,60 +1,76 @@
-var block_size = math.min(canvas.width() / 10, canvas.height() / 20);
-var outline_size = block_size/8;
+include "Assets";
+include "Tetromino";
+include "Playfield";
+include "Renderer";
+include "TetrominoPool";
 
-var x = 5;
-var y = 0;
+# Initialize the necessary classes
+var playfield = Playfield(10,20);
+var pool = TetrominoPool();
+var tetromino = Tetromino(pool.get());
+var renderer = Renderer();
 
-var colors = {
-	"yellow": {
-		"base": [204/255,204/255,0/255],
-		"light": [255/255,255/255,0/255],
-		"dark": [153/255,153/255,0/255]
+
+var previous_time = localtime();
+
+var level = 0;
+var lines = 0;
+var points = 0;
+
+var gravity = level_gravity[level];
+
+setEventHandler("timer", function(event){
+	if (localtime() - previous_time >= gravity) then {
+		previous_time = localtime();
+	
+		# render the state so we can see changes
+		renderer.render(playfield, tetromino, Tetromino(pool.next), points, level, lines);
+	
+	  	# change the y position of the block
+		tetromino.drop();
+		
+		# check for collision, if true then undrop tetromino, insert and get new
+		if playfield.check_collision(tetromino) then {
+			tetromino.undo();
+			if tetromino.row == 0 then quitEventMode();
+			
+			playfield.insert_tetromino(tetromino);
+			var cleared_rows = playfield.remove_full_rows(tetromino.row);
+			points +=  base_score_values[cleared_rows] * (level+1);
+			lines += cleared_rows;
+			level = lines//10;
+			gravity = level_gravity[level];
+			
+			tetromino = Tetromino(pool.get());
+		}
 	}
-};
+});
 
-
-function draw_block(pos_x, pos_y, color){
-	pos_x = pos_x * block_size;
-	pos_y = pos_y * block_size;
-
-	# Draw single block 
-	# dark yellow rgba=255,255,0
-	canvas.setFillColor(
-		colors[color]["dark"][0],
-		colors[color]["dark"][1],
-		colors[color]["dark"][2]
-	,1);
-	canvas.fillRect(pos_x,pos_y,block_size,block_size);
+setEventHandler("canvas.keydown", function(event){
+	tetromino.save_state();
+	if event.key == "6" then tetromino.move_right();
+	if event.key == "4" then tetromino.move_left();
+	if event.key == "5" then tetromino.rotate_clockwise();
+	if event.key == "8" then tetromino.rotate_counter_clockwise();
+	if event.key == " " then {
+		gravity = 50;
+		return;
+	}
 	
-	# light yellow rgb=153,153,0
-	
-	canvas.setFillColor(
-		colors[color]["light"][0],
-		colors[color]["light"][1],
-		colors[color]["light"][2]
-		,1);
-	canvas.fillArea([[pos_x,pos_y],[pos_x,pos_y+block_size],[pos_x+block_size,pos_y]]);
-	
-	
-	#´yellow rgb=204,204,0 
-	canvas.setFillColor(
-		colors[color]["base"][0],
-		colors[color]["base"][1],
-		colors[color]["base"][2]
-		,1);
-	canvas.fillRect(pos_x+outline_size * 0.5,pos_y+outline_size * 0.5,block_size-outline_size,block_size-outline_size);
-}
+	if playfield.check_collision(tetromino) then {
+		tetromino.undo();
+	}
+	else {
+		# render the state so we can see changes
+		var before = time();
+		renderer.render(playfield, tetromino, Tetromino(pool.next), points, level, lines);
+		print(time() - before);
+	}
 
-while(y < 20) do {
-	canvas.setFillColor(1,1,1,1);
-	canvas.clear();
+});
 
-	draw_block(x,y, "yellow");
-	draw_block(x+1,y, "yellow");
-	draw_block(x,y+1, "yellow");
-	draw_block(x+1,y+1, "yellow");
-	
-	y = y + 1;
-	wait(300);
-}
+setEventHandler("canvas.keyup", function(event){
+	if event.key == " " then gravity = level_gravity[level];
+});
 
+enterEventMode();

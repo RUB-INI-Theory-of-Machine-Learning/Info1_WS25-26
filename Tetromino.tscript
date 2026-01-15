@@ -1,0 +1,57 @@
+class Tetromino{
+	public:
+		var row = 0;
+		var column = 3;
+		var rotation = 0;
+		var shape;
+		var previous_state;
+		var max_rotations;
+
+		constructor(shape_){
+			this.shape = shape_;
+			this.max_rotations = tetrominos[this.shape].size();
+		}
+
+		function blockmap(){
+			return tetrominos[this.shape][this.rotation];
+		}
+
+		function drop(){
+			this.save_state();
+			this.row += 1;
+		}
+
+		function save_state(){
+			this.previous_state = {
+				"row": this.row,
+				"column": this.column,
+				"rotation": this.rotation
+			};
+		}
+
+		function move_right(){
+			this.save_state();
+			this.column += 1;
+		}
+
+		function move_left(){
+			this.save_state();
+			this.column -= 1;
+		}
+
+		function rotate_clockwise(){
+			this.save_state();
+			this.rotation = (this.rotation + 1) % this.max_rotations;
+		}
+
+		function rotate_counter_clockwise(){
+			this.save_state();
+			this.rotation = (this.rotation - 1) % this.max_rotations;
+		}
+
+		function undo(){
+			this.row = this.previous_state["row"];
+			this.column = this.previous_state["column"];
+			this.rotation = this.previous_state["rotation"];
+		}
+}

@@ -1,0 +1,140 @@
+class Renderer {
+	public:
+		var block_size = 0;
+		var outline_size = 0;
+		var sidebar_size = 7;
+		var p_blockmap = [];
+
+		constructor(){
+			canvas.setFillColor(0,0,0);
+			canvas.clear();
+
+			# We define the block size
+			this.block_size = math.min(canvas.width() // (12+ this.sidebar_size), canvas.height() // 22 );
+
+			this.p_blockmap = Array(22, Array(12, 0));
+
+			# We define the outline to be 1/10 of the block size
+			this.outline_size = this.block_size/10;
+
+			canvas.setFont("MS Comic Sans", block_size);
+
+			# render sidebar
+			for var column in 0:7 do {
+					this.draw_block(column+12, 0, "f");
+					this.draw_block(column+12, 21, "f");
+			}
+
+			for var row in 0:22 do {
+					this.draw_block(19, row, "f");
+			}
+
+			this.draw_text(2,1,"Points");
+			this.draw_text(5,1,"Lines");
+			this.draw_text(8,1,"Level");
+
+		}
+
+		function render(playfield, tetromino, next_tetromino, points, level, lines){
+			var blockmap_diff = [];
+			var blockmap_cache = deepcopy(playfield.blockmap);
+
+			playfield.insert_tetromino(tetromino);
+			for var row in 0:playfield.blockmap.size() do
+				for var column in 0:playfield.blockmap[0].size() do {
+					if(this.p_blockmap[row][column] != playfield.blockmap[row][column]) then {
+						if playfield.blockmap[row][column] != 0 then {
+							blockmap_diff.push({"row": row, "column": column, "type": playfield.blockmap[row][column]});
+						}
+						else {
+							blockmap_diff.push({"row": row, "column": column, "type": "b"});
+						}
+					}
+				}
+
+			# save for next time
+			this.p_blockmap = deepcopy(playfield.blockmap);
+
+			# reset playfield
+			playfield.blockmap = deepcopy(blockmap_cache);
+
+			# draw difference
+			for var block in blockmap_diff do {
+				this.draw_block(block["column"], block["row"], block["type"]);
+			}
+
+
+
+
+
+			# show points
+			this.draw_background(3,1,1,1);
+			this.draw_background(6,1,1,1);
+			this.draw_background(9,1,1,1);
+			this.draw_text(3,1,points);
+			this.draw_text(6,1,lines);
+			this.draw_text(9,1,level);
+
+
+			this.draw_background(16,1,4,4);
+			# show next_tetromino
+			for var row in 0:next_tetromino.blockmap().size() do
+				for var column in 0:next_tetromino.blockmap()[0].size() do
+					if(next_tetromino.blockmap()[row][column] != 0) then this.draw_block(
+							13 + column,
+							16 + row,
+							next_tetromino.blockmap()[row][column]
+						);
+		}
+
+		function draw_background(x,y,w,h){
+			canvas.setFillColor(0,0,0);
+			canvas.fillRect(
+				(12+y) * this.block_size,
+				x * this.block_size,
+				w*this.block_size,
+				h*this.block_size
+				);
+		}
+
+
+		# pos_x and pos_y are in units of blocks! Conversion to pixels happens internally.
+		function draw_block(pos_x, pos_y, color) {
+			pos_x = pos_x * block_size;
+			pos_y *= block_size;
+
+			# draw the block
+			canvas.setFillColor(colors[color]["light"][0]/255,
+								colors[color]["light"][1]/255,
+								colors[color]["light"][2]/255,
+								1);
+			canvas.fillRect(pos_x, pos_y, block_size, block_size);
+
+			canvas.setFillColor(colors[color]["dark"][0]/255,
+							    colors[color]["dark"][1]/255,
+							    colors[color]["dark"][2]/255,
+							    1);
+			canvas.fillArea([
+								[pos_x + block_size, pos_y],
+								[pos_x, pos_y+block_size],
+								[pos_x + block_size, pos_y + block_size]
+							]);
+
+			canvas.setFillColor(colors[color]["base"][0]/255,
+						        colors[color]["base"][1]/255,
+						        colors[color]["base"][2]/255,
+						        1);
+			canvas.fillRect(
+				pos_x+outline_size,
+				pos_y+outline_size,
+				block_size-2*outline_size,
+				block_size-2*outline_size
+			);
+		}
+
+		function draw_text(column, row, text){
+			canvas.setFillColor(1,1,1);
+			canvas.text( (12+row) * this.block_size,column * this.block_size, text);
+
+		}
+}
